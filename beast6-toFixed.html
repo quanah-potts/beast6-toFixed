@@ -1,0 +1,86 @@
+<script src="simpletest.js"></script>
+
+<script> 
+
+// note: does not account for special decimal chars like ',' 
+
+function toFixed(number, precision){
+
+  // converting any numeric values to string 
+  if (typeof number === "number"){
+    number = number.toString();
+  }
+
+  // using split to separate into integer & decimal portions for manipulation 
+  var splitArray = number.split('.'); 
+  var integerPortion = splitArray[0]; 
+  var decimalPortion = splitArray[1]; 
+  var decimalLength = decimalPortion.length; 
+
+  // check special cases: 
+  if (precision === 0){ // if no precision, we don't care about decimals, return integer 
+    return integerPortion; 
+  }
+  if (precision === decimalLength){ // if precision is the same as # of decimals, return original number
+    return number; 
+  }
+  if (precision > decimalLength){ // if precision is greater than # of decimals, put 0s down until equal 
+    while(decimalPortion.length<precision){
+      decimalPortion+='0'; 
+    }
+    return integerPortion+'.'+decimalPortion; 
+  }
+
+  /* ROUNDING */
+  var roundingIntegerPortion = decimalPortion.slice(0,precision); // this is the stuff we want to eventually keep 
+  var roundingDecimalPortion = decimalPortion.slice(precision); // this part determines the result of Math.round later 
+  var roundingString = integerPortion + roundingIntegerPortion + '.' + roundingDecimalPortion; 
+
+  /* for now I'll use Math.round, may be fun to remove all math in the future */ 
+  var roundedNumber = Number(roundingString); // turn it into number data type 
+  roundedNumber = Math.round(roundedNumber); // use Math.round to get rid of what we don't want 
+  roundedNumber = roundedNumber.toString(); // turn back into string 
+
+  /* replacing the decimal point in the final string */
+  var decimalStart = roundedNumber.length - precision; 
+  var finalIntegerPortion = roundedNumber.slice(0,decimalStart); 
+  if (!finalIntegerPortion){ 
+    finalIntegerPortion = '0'; 
+  }
+  var finalDecimalPortion = roundedNumber.slice(decimalStart); 
+
+  return finalIntegerPortion + '.' + finalDecimalPortion; 
+
+} 
+
+tests({
+
+  'If the precision is 0, return only the integer portion of the number.':function(){
+    var result = toFixed('10.235',0); 
+    eq(result,'10');
+  }, 
+
+  'If precision is equal to the number of decimal digits, return the original number.':function(){
+    var result = toFixed('10.235',3); 
+    eq(result,'10.235'); 
+  },
+
+  'If precision is greater than the number of decimal digits, place zeros until the decimal portion length equals precision.':function(){
+    var result = toFixed('10.235',5); 
+    eq(result,'10.23500'); 
+  },
+
+  'It should return a string representing a number rounded based on a given precision value':function(){
+    eq(toFixed('10.235',2),'10.24'); 
+    eq(toFixed('.615',2),'0.62'); 
+    eq(toFixed('1.005',2),'1.01'); 
+  },
+
+  'It should accept a numerical value as first argument and still return a string':function(){
+    var result = toFixed(10.265,2); 
+    eq(result,'10.27'); 
+  }
+
+})
+
+</script> 
